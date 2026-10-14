@@ -1,8 +1,7 @@
 # dbt + DuckDB sandbox
 
-A demonstrable dbt project for the **Senior Data Analyst** role at Groupe Foyer (Luxembourg).
-Built with DuckDB — no Docker, no cloud account. Every file is small on purpose: you can read
-all of it and explain every piece.
+A demonstrable dbt project for a **Senior Data Analyst** role.
+Built with DuckDB — no Docker, no cloud account.
 
 ## What this project demonstrates
 
@@ -63,25 +62,3 @@ dbt docs serve               # opens localhost:8080
 
 The site includes an interactive DAG viewer, model descriptions, column types, and test
 results. See [lesson 0008](../../lessons/0008-dbt-docs-and-portfolio.html) for the full walkthrough.
-
-## Course map
-
-These lessons build on each other toward the target role. Each is a self-contained HTML file
-with a quiz and hands-on exercise.
-
-| # | Lesson | Topic |
-|---|---|---|
-| 0001 | [The dbt core loop](../../lessons/0001-dbt-core-loop.html) | `dbt run`, `dbt build`, `ref()`, project structure |
-| 0002 | [Sources, tests & layers](../../lessons/0002-dbt-sources-tests-and-layers.html) | `source()`, generic tests, staging/intermediate/marts |
-| 0003 | [Iceberg: what a table really is](../../lessons/0003-iceberg-table-format.html) | Snapshots, hidden partitioning, ACID on object stores |
-| 0004 | [Airflow DAGs in practice](../../lessons/0004-airflow-dags-in-practice.html) | Operators, dependencies, scheduling, catchup |
-| 0005 | [Medallion architecture](../../lessons/0005-medallion-architecture.html) | Bronze/silver/gold mapping to dbt layers |
-| 0006 | [Star schemas & KPI design](../../lessons/0006-star-schemas-and-kpis.html) | Facts vs dimensions, Kimball modelling, interview vocabulary |
-| 0007 | [Incremental materializations](../../lessons/0007-incremental-materializations.html) | `is_incremental()`, strategies, filter-on-incremental pattern |
-| 0008 | [dbt docs & the portfolio project](../../lessons/0008-dbt-docs-and-portfolio.html) | Generating the docs site, docs blocks, portfolio artifact |
-
-## Agents
-
-Treat `profiles.yml` and `setup.ps1` as the source of truth; `%USERPROFILE%\.dbt\profiles.yml`
-is derived (re-run `setup.ps1` to sync). `warehouse.duckdb`, `target/`, `logs/` and `.venv/`
-are build artifacts — regenerate, never commit.
