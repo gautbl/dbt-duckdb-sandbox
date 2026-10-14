@@ -1,48 +1,48 @@
 name: Deploy dbt docs
 
- on:
-   push:
-     branches: [main]
-   workflow_dispatch:
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
 
- # Sets permissions of the GITHUB_TOKEN to allow deployment to gh-pages
- permissions:
-   contents: read
-   pages: write
-   id-token: write
+# Sets permissions of the GITHUB_TOKEN to allow deployment to gh-pages
+permissions:
+  contents: read
+  pages: write
+  id-token: write
 
- # Allow only one concurrent deployment
- concurrency:
-   group: pages
-   cancel-in-progress: true
+# Allow only one concurrent deployment
+concurrency:
+  group: pages
+  cancel-in-progress: true
 
- jobs:
-   deploy:
-     runs-on: ubuntu-latest
-     environment:
-       name: github-pages
-       url: ${{ steps.deployment.outputs.page_url }}
-     steps:
-       - uses: actions/checkout@v4
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
 
-       - uses: actions/setup-python@v5
-         with:
-           python-version: "3.12"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
 
-       - name: Install dbt + DuckDB adapter
-         run: pip install dbt-duckdb
+      - name: Install dbt + DuckDB adapter
+        run: pip install dbt-duckdb
 
-       - name: Generate docs
-         run: dbt docs generate
+      - name: Generate docs
+        run: dbt docs generate
 
-       - name: Setup Pages
-         uses: actions/configure-pages@v5
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
 
-       - name: Upload artifact
-         uses: actions/upload-pages-artifact@v3
-         with:
-           path: target
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: target
 
-       - name: Deploy to GitHub Pages
-         id: deployment
-         uses: actions/deploy-pages@v4
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
