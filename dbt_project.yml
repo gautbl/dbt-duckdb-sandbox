@@ -1,0 +1,16 @@
+name: dbt_duckdb_sandbox
+version: "1.0.0"
+config-version: 2
+
+profile: dbt_duckdb_sandbox
+
+model-paths: ["models"]
+seed-paths: ["seeds"]
+
+require-dbt-version: [">=1.7.0", "<2.0.0"]
+
+clean-targets:
+  - target
+  - dbt_packages
+
+docs-paths: ["docs"]

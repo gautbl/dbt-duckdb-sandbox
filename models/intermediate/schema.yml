@@ -1,0 +1,17 @@
+version: 2
+
+models:
+  - name: int_order_totals
+    description: >
+      Intermediate layer — enriches stg_orders with revenue calculations
+      (gross_revenue, net_revenue with cancellation/return logic).
+      Materialized as ephemeral: inlined as a CTE into fct_orders.
+    columns:
+      - name: order_id
+        description: Foreign key to stg_orders.
+        data_tests:
+          - not_null
+      - name: gross_revenue
+        description: Revenue before cancellations and returns (quantity × unit_price).
+      - name: net_revenue
+        description: Revenue after cancellations and returns. Zero for cancelled or returned orders.

@@ -1,0 +1,11 @@
+# dbt profile for the sandbox - a complete, valid profiles.yml on its own.
+# Keep comments ASCII-only: setup.ps1 copies this block into
+# %USERPROFILE%\.dbt\profiles.yml and non-ASCII text risks encoding damage there.
+# The copy in ~/.dbt is derived, never hand-edited.
+dbt_duckdb_sandbox:
+  target: dev
+  outputs:
+    dev:
+      type: duckdb
+      path: warehouse.duckdb
+      threads: 2

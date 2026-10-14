@@ -1,0 +1,11 @@
+order_id,customer_id,order_date,status,quantity,unit_price
+1001,1,2024-03-04,completed,3,19.90
+1002,1,2024-03-11,pending,1,120.00
+1003,2,2024-03-12,completed,5,7.25
+1004,3,2024-04-02,cancelled,2,45.00
+1005,3,2024-04-15,completed,1,99.99
+1006,4,2024-04-15,returned,4,15.50
+1007,5,2024-05-01,completed,2,60.00
+1008,6,2024-05-09,pending,10,3.75
+1009,2,2024-05-21,completed,1,250.00
+1010,6,2024-06-03,completed,6,12.00

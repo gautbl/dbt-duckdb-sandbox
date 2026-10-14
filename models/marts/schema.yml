@@ -1,0 +1,53 @@
+version: 2
+
+models:
+  - name: fct_orders
+    description: Fact table — one row per order, with revenue measures. Grain one row per order.
+    columns:
+      - name: order_id
+        data_tests:
+          - unique
+          - not_null
+      - name: customer_id
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_customers')
+                field: customer_id
+      - name: net_revenue
+        data_tests:
+          - not_null
+
+  - name: fct_orders_daily
+    description: Daily rollup of fct_orders, built incrementally.
+    columns:
+      - name: order_date
+        data_tests:
+          - unique
+          - not_null
+
+  - name: dim_customers
+    description: Customer dimension — one row per customer, from stg_customers.
+    columns:
+      - name: customer_id
+        data_tests:
+          - unique
+          - not_null
+      - name: customer_name
+        data_tests:
+          - not_null
+      - name: country
+        data_tests:
+          - not_null
+
+  - name: dim_date
+    description: Calendar date dimension — one row per day, with year/month/week labels.
+    columns:
+      - name: date_day
+        data_tests:
+          - unique
+          - not_null
+      - name: year
+        data_tests:
+          - not_null

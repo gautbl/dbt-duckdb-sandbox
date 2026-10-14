@@ -1,0 +1,7 @@
+customer_id,customer_name,country,segment
+1,Claude Muller,LU,enterprise
+2,Sophie Weiler,LU,consumer
+3,Marco Rossi,FR,consumer
+4,Anke Schneider,DE,enterprise
+5,Julien Dupont,BE,small_business
+6,Léa Bernard,FR,consumer
