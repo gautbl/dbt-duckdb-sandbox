@@ -13,7 +13,7 @@ Built with DuckDB — no Docker, no cloud account.
 | **Data tests** | `unique`, `not_null`, `accepted_values`, `relationships` on every key column |
 | **Source freshness** | Declared on `raw.orders` and `raw.customers` with warn/error thresholds |
 | **Ephemeral models** | `int_order_totals` — inlined as CTE into each `ref()` caller |
-| **Browsable documentation site** | `dbt docs generate` → `dbt docs serve` (see lesson 0008) |
+| **Browsable documentation site** | `dbt docs generate` → `dbt docs serve` |
 
 ## Layout
 
@@ -33,24 +33,36 @@ tests/                      custom data tests (e.g. assert_fct_orders_net_revenu
 
 ## Quick start
 
-Requires [uv](https://docs.astral.sh/uv/) (it manages a 64-bit Python 3.13 — the system
-Python here is 32-bit, which has no DuckDB wheel).
+Needs [uv](https://docs.astral.sh/uv/) (it installs a 64-bit CPython 3.13 with DuckDB wheels).
 
+**Windows:**
 ```powershell
 powershell -ExecutionPolicy Bypass -File setup.ps1
 ```
 
-Done when it ends with a `dbt --version` block naming dbt-core and dbt-duckdb. It wipes and
-rebuilds `.venv`, then syncs the sandbox block between the `>>> dbt-duckdb-sandbox >>>`
-markers in `%USERPROFILE%\.dbt\profiles.yml` — so plain `dbt <command>` works from the
-project root. Edit connections only in `profiles.yml` here; the copy in `~/.dbt` is derived,
-never hand-edited.
+**MacOS / Linux:**
+```sh
+bash setup.sh
+```
+
+Done when it ends with a `dbt --version` block naming dbt-core and dbt-duckdb.
+
+Each script wipes and rebuilds `.venv`. It then syncs the sandbox block between the `>>> dbt-duckdb-sandbox >>>` markers in `~/.dbt/profiles.yml`.
+
+Plain `dbt <command>` works from the project root after that. Edit connections only in `profiles.yml` here. Never hand-edit the copy in `~/.dbt`.
 
 ## Daily use
 
+**Windows:**
 ```powershell
 .venv\Scripts\activate
 dbt build                    # seeds + models + tests in one ordered run
+```
+
+**MacOS / Linux:**
+```sh
+source .venv/bin/activate
+dbt build
 ```
 
 ## Generate the documentation site
@@ -60,5 +72,4 @@ dbt docs generate
 dbt docs serve               # opens localhost:8080
 ```
 
-The site includes an interactive DAG viewer, model descriptions, column types, and test
-results. See [lesson 0008](../../lessons/0008-dbt-docs-and-portfolio.html) for the full walkthrough.
+The site includes an interactive DAG viewer, model descriptions, column types, and test results.

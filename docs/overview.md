@@ -8,16 +8,13 @@ Built with DuckDB, organised in the medallion architecture
 ## Key design decisions
 
 - **Star schema at gold**: `dim_customers` + `dim_date` foreign-keyed by
-  `fct_orders` and `fct_orders_daily`. See
-  [lesson 0006](../lessons/0006-star-schemas-and-kpis.html).
+  `fct_orders` and `fct_orders_daily`.
 - **Incremental facts**: `fct_orders_daily` uses merge strategy for
-  idempotent daily rebuilds. See
-  [lesson 0007](../lessons/0007-incremental-materializations.html).
+  idempotent daily rebuilds. 
 - **Data quality**: unique and not_null tests on every primary key;
   accepted_values on order `status`; referential integrity from orders → customers.
 
 ## Links
 
-- [Mission](../MISSION.md)
 - [Source freshness](./#!/source/raw.orders) (click through)
 {% enddocs %}
