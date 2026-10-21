@@ -73,3 +73,24 @@ dbt docs serve               # opens localhost:8080
 ```
 
 The site includes an interactive DAG viewer, model descriptions, column types, and test results.
+
+### Walkthrough
+
+1. `dbt docs generate` compiles the project and introspects DuckDB's `information_schema` for column
+types, row counts, and catalog metadata. It writes a static site to `target/`.
+
+2. `dbt docs serve` starts a local HTTP server on port 8080. Open `http://localhost:8080`.
+
+3. The landing page shows the custom overview from `docs/overview.md` (a docs block named
+`__overview__`). It describes the medallion architecture, key design decisions, and source freshness
+links.
+
+4. Use the **DAG view** (View lineage) to see model dependencies. Click any model node to see its
+description, columns, tests, and SQL.
+
+5. The **Source freshness** tab shows freshness checks on `raw.orders` and `raw.customers`. Run `dbt
+source freshness` to update this data.
+
+6. Share the site as a static artifact: run `dbt docs generate --target-path docs-site`, then publish
+the `docs-site/` folder to GitHub Pages, Netlify, or any static host. The site is pure HTML + JSON
+(WASM-powered on dbt v2).
