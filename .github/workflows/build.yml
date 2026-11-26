@@ -1,0 +1,67 @@
+name: Build and test the warehouse
+
+# Builds the whole warehouse from seeds on a clean runner, then runs the data
+# tests again. A red check here means a model error or a failing data test.
+#
+# Two things on purpose:
+#   * No `--select`. Every model and test joins CI with no edit to this file.
+#     Selecting a subset would let a new model skip the gate.
+#   * No warehouse artifact restore and no cleanup step. The runner owns no
+#     database, so the build starts from the seeds, as a fresh clone does.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Same CPython minor version as setup.sh and setup.ps1, so the two
+      # environments do not diverge.
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Cache pip downloads
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: pip-${{ runner.os }}-${{ hashFiles('requirements.txt') }}
+          restore-keys: |
+            pip-${{ runner.os }}-
+
+      # requirements.txt is the one source of the dbt version, for local
+      # setup and for CI. Do not pin a version in this file.
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      # The profile lives in the repo and setup.sh copies it to ~/.dbt.
+      # The runner has no ~/.dbt, so pass --profiles-dir instead.
+      - name: Build the warehouse
+        run: dbt build --profiles-dir .
+
+      - name: Run the data tests again
+        run: dbt test --profiles-dir .
+
+      # run_results.json and compiled/ are the diagnosis inputs after a red
+      # run. A green run uploads nothing, so it stays fast.
+      - name: Upload the dbt artifacts
+        if: failure() || cancelled()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dbt-target
+          path: target/
+          if-no-files-found: warn
+          retention-days: 7

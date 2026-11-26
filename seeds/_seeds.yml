@@ -1,0 +1,23 @@
+version: 2
+
+# The staging models are a one-to-one rename of the seed columns, so the tests
+# on stg_customers and stg_orders already cover these rows (`models/staging/schema.yml`).
+# These tests are here for position in the DAG: a duplicate key fails on the
+# seed, before any model runs, so the log names the seed and not the staging view.
+
+seeds:
+  - name: raw_orders
+    description: Ingested orders. The source declaration in models/staging/_stg__sources.yml names this table.
+    columns:
+      - name: order_id
+        data_tests:
+          - unique
+          - not_null
+
+  - name: raw_customers
+    description: Ingested customers. The source declaration in models/staging/_stg__sources.yml names this table.
+    columns:
+      - name: customer_id
+        data_tests:
+          - unique
+          - not_null
