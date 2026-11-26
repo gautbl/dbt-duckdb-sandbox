@@ -3,11 +3,13 @@ name: Build and test the warehouse
 # Builds the whole warehouse from seeds on a clean runner, then runs the data
 # tests again. A red check here means a model error or a failing data test.
 #
-# Two things on purpose:
+# Three things on purpose:
 #   * No `--select`. Every model and test joins CI with no edit to this file.
 #     Selecting a subset would let a new model skip the gate.
 #   * No warehouse artifact restore and no cleanup step. The runner owns no
 #     database, so the build starts from the seeds, as a fresh clone does.
+#   * No Pages write permission. This workflow builds and tests, and it
+#     deploys nothing. A build that can deploy can publish a bad warehouse.
 
 on:
   push:
@@ -15,6 +17,8 @@ on:
   pull_request:
   workflow_dispatch:
 
+# Read-only. The docs workflow holds the Pages write permission and waits
+# for this workflow to end, so a green build gates the site.
 permissions:
   contents: read
 

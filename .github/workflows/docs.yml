@@ -1,11 +1,36 @@
 name: Deploy dbt docs
 
-on:
-  push:
-    branches: [main]
-  workflow_dispatch:
+# Generates the dbt docs site and publishes it to GitHub Pages.
+#
+# The site follows a green build. This workflow triggers on the run of the
+# build workflow, not on the push itself, so a red build stops the deploy
+# before it starts. The two workflows keep separate verdicts.
+#
+# A site built from a pull request must not reach Pages. The `push` term in
+# the job guard stops that case, because the `branches` filter alone does not.
+#
+# There is no `workflow_dispatch` trigger here, and that absence is a decision,
+# not an oversight. See the comment under `on:`.
 
-# Sets permissions of the GITHUB_TOKEN to allow deployment to gh-pages
+on:
+  # A push to `main` starts the build workflow. This workflow follows the end
+  # of that run.
+  workflow_run:
+    workflows: ["Build and test the warehouse"]
+    types: [completed]
+    branches: [main]
+  # No `workflow_dispatch` here, on purpose. A dispatch of this workflow would
+  # publish with no build verdict to read. Dispatch the build workflow
+  # instead: a green run starts this workflow in turn, and the site follows
+  # the same edge as a push.
+  #
+  # `branches` filters the branch of the run that triggers this workflow. A
+  # pull request into `main` can carry `main` as its base, so the `event` term
+  # in the job guard also has to stop it.
+
+# Sets permissions of the GITHUB_TOKEN to allow deployment to gh-pages.
+# The build workflow carries no `pages: write` and no `id-token: write`: it
+# needs neither, and a read-only token is the smaller surface.
 permissions:
   contents: read
   pages: write
@@ -18,18 +43,45 @@ concurrency:
 
 jobs:
   deploy:
+    # Only a successful run passes the `conclusion` term, so a failed,
+    # cancelled or skipped run stops here. The `event` term stops a run that a
+    # pull request started.
+    #
+    # No `workflow_dispatch` term belongs here. Decision 9 says the site shows
+    # no warehouse that failed its tests. A dispatch would publish with no
+    # build verdict to read, so it breaks that rule. To redeploy the site,
+    # dispatch the build workflow: a green run starts this workflow in turn.
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push'
     runs-on: ubuntu-latest
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Build the site from the commit that the green build tested. A
+          # plain checkout reads the current `main` instead, and a new push
+          # can move it before this job starts.
+          ref: ${{ github.event.workflow_run.head_sha }}
 
       # Same CPython minor version as setup.sh, setup.ps1 and the build
       # workflow, so one environment serves all of them.
       - uses: actions/setup-python@v5
         with:
           python-version: "3.13"
+
+      # Same cache as the build workflow, keyed on the same file. The gain is
+      # small at one run per push to `main`. The step stays here so that the
+      # two workflows show one install shape, not two.
+      - name: Cache pip downloads
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: pip-${{ runner.os }}-${{ hashFiles('requirements.txt') }}
+          restore-keys: |
+            pip-${{ runner.os }}-
 
       # requirements.txt is the one source of the dbt version. Do not pin a
       # version in this file: a drift between the two is the failure to avoid.
