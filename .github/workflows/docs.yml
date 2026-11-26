@@ -25,15 +25,21 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Same CPython minor version as setup.sh, setup.ps1 and the build
+      # workflow, so one environment serves all of them.
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: "3.13"
 
-      - name: Install dbt + DuckDB adapter
-        run: pip install dbt-duckdb
+      # requirements.txt is the one source of the dbt version. Do not pin a
+      # version in this file: a drift between the two is the failure to avoid.
+      - name: Install dependencies
+        run: pip install -r requirements.txt
 
+      # The runner has no ~/.dbt, and the profile lives in the repo. Pass
+      # --profiles-dir, as the build workflow does.
       - name: Generate docs
-        run: dbt docs generate
+        run: dbt docs generate --profiles-dir .
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
