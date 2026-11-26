@@ -50,6 +50,8 @@ Commit `43a9907` adds the workflow and two repairs that a clean runner forced.
 1. `models/staging/_stg__sources.yml` named schema `raw`. `dbt seed` puts the tables in `main`. Four source tests failed on a clean build. The declaration now names `main`, and `profiles.yml` states the schema explicitly.
 2. The seeds had no tests. `seeds/_seeds.yml` adds key tests, so a duplicate key fails on the seed before any model runs. This is a DAG position choice, not extra coverage. The staging tests already cover the same rows.
 
+**Review.** A two-axis review of tickets 01 and 02 against `origin/main` found no hard violation and no defect in this ticket's files. Both comment repairs landed in ticket 02. See its Comments section.
+
 **Left for later tickets:**
 
 - The final box needs the GitHub run URL. A human supplies it under ticket 05, once the first push to `main` runs the workflow. Delete this line when the URL is here.

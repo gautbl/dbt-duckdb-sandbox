@@ -8,9 +8,9 @@ dbt_duckdb_sandbox:
     dev:
       type: duckdb
       path: warehouse.duckdb
-      # `schema` in this profile is the default for models and seeds.
-      # A custom schema such as `raw` gets the default prefixed to it
-      # (`main_raw`), so the source declaration names `raw` only when
-      # nothing sets a custom schema. A clean build proves the match.
+      # Default schema for models and seeds. The source declaration in
+      # models/staging/_stg__sources.yml names the same value. A seed that
+      # sets a custom schema takes this one as a prefix (`main_raw`), so the
+      # two stay in step. A clean build proves the match.
       schema: main
       threads: 2

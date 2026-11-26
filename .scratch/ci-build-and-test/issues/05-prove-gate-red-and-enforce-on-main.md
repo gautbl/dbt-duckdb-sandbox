@@ -10,6 +10,8 @@ This step proves the gate can fail, not only pass. A local run already showed th
 
 **Step 2 — enforce the gate on `main`.** Add a branch protection rule or a ruleset on `main` that needs the build workflow check to pass. The gate then blocks a merge instead of advising on it. This is a GitHub repository setting, not a workflow setting, and no workflow file can carry it.
 
+**From the review of tickets 01 and 02.** User story 21 asks for a green first run, and no GitHub run URL exists yet. The local clean run gives 38 of 38 and 30 of 30, and that run does not prove the runner. Step 1b supplies the URL. Ticket 01 keeps one box open until then.
+
 **Blocked by:** 01 (a green run must exist before the gate can turn red)
 
 **Status:** ready-for-human

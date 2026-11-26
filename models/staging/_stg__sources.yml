@@ -3,9 +3,9 @@ version: 2
 sources:
   - name: raw
     description: Ingested CSV files, loaded by `dbt seed`, the seam between ingestion and transformation.
-    # No `schema` here on purpose. The profile names the default schema and
-    # the seeds land there. A custom schema would get the default prefixed
-    # to it (`main_raw`), and a clean build would fail on a missing table.
+    # `profiles.yml` sets this same schema as the default. The pair must match:
+    # a seed with a custom schema takes the default as a prefix (`main_raw`),
+    # and this line would then name a table that does not exist.
     schema: main
     tables:
       - name: orders
