@@ -14,6 +14,7 @@ Built with DuckDB — no Docker, no cloud account.
 | **Source freshness** | Declared on `raw.orders` and `raw.customers` with warn/error thresholds |
 | **Ephemeral models** | `int_order_totals` — inlined as CTE into each `ref()` caller |
 | **Browsable documentation site** | `dbt docs generate` → `dbt docs serve` |
+| **Continuous integration** | `.github/workflows/build.yml` — `dbt build`, then `dbt test`, on every pull request and every push to `main` |
 
 ## Layout
 
@@ -29,6 +30,7 @@ models/staging/             layer 1 (silver): views, one per seed, renamed + typ
 models/intermediate/        layer 2 (silver): ephemeral model — never lands in the warehouse
 models/marts/               layer 3 (gold): table (dim + fact) + incremental (daily rollup)
 tests/                      custom data tests (e.g. assert_fct_orders_net_revenue_nonnegative)
+.github/workflows/          build.yml (the build gate) + docs.yml (the docs publish)
 ```
 
 ## Quick start
@@ -65,6 +67,37 @@ source .venv/bin/activate
 dbt build
 ```
 
+## Continuous integration
+
+Two workflows run on GitHub Actions. They keep separate verdicts, so neither hides the other.
+
+**Build gate.** `.github/workflows/build.yml` runs on every pull request, on every push to `main`, and on manual dispatch. A newer run on the same ref cancels an older one. The job installs from `requirements.txt` on CPython 3.13. It then runs these two commands:
+
+```
+dbt build --profiles-dir .
+dbt test --profiles-dir .
+```
+
+`dbt build` selects every seed, model and test in dependency order, with no `--select`. A new model joins CI with no edit to the workflow.
+
+The second command repeats work on purpose, so the workflow matches the commands a developer runs. When a run fails, dbt logs the model and the column. The workflow uploads `target/` on a failure or a cancel, so `run_results.json` and `compiled/` stay readable. A green run uploads nothing.
+
+CI does **not** run `dbt source freshness`. The source declarations name a `loaded_at` column that the seed files do not carry, so a freshness check would fail. Freshness stays a local step.
+
+**Docs publish.** `.github/workflows/docs.yml` follows a green build. It triggers on the completed run of the build workflow, filtered to `main`. A red or cancelled build never reaches the site. The job checks out the commit that the green build tested, so the site shows that commit. There is no dispatch trigger on the docs workflow. To redeploy the site, dispatch the build workflow: a green run starts the docs publish in turn.
+
+The workflow files are the source of truth for these commands. When a workflow changes, change the matching line here in the same commit.
+
+## The full check
+
+One command runs the whole check, exactly as CI does:
+
+```
+dbt build --profiles-dir .
+```
+
+The CI run adds `dbt test --profiles-dir .` as its second step.
+
 ## Generate the documentation site
 
 ```powershell
@@ -89,7 +122,8 @@ links.
 description, columns, tests, and SQL.
 
 5. The **Source freshness** tab shows freshness checks on `raw.orders` and `raw.customers`. Run `dbt
-source freshness` to update this data.
+source freshness` to update this data. This step is local only: CI runs no freshness check, and the
+docs job runs `dbt docs generate` on a clean tree, so the published site carries no freshness result.
 
 6. Share the site as a static artifact: run `dbt docs generate --target-path docs-site`, then publish
 the `docs-site/` folder to GitHub Pages, Netlify, or any static host. The site is pure HTML + JSON
