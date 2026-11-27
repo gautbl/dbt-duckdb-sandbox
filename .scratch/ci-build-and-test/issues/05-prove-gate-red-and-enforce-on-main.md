@@ -16,7 +16,7 @@ This step proves the gate can fail, not only pass. A local run already showed th
 
 **Status:** ready-for-human
 
-- [ ] A deliberately failing data test turned the build workflow red on a scratch branch.
+- [X] A deliberately failing data test turned the build workflow red on a scratch branch.
 - [ ] The red run URL is recorded under `## Comments`.
 - [ ] The URL of the first green run on `main` is recorded here and in ticket 01.
 - [ ] The scratch branch is deleted.
