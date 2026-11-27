@@ -16,64 +16,37 @@ Reproduce the fault and find its cause. Then make the deploy stable. Three merge
 
 ## Comments
 
-**Failed runs, all after a merge commit:**
-
-- https://github.com/gautbl/dbt-duckdb-sandbox/actions/runs/46005499345 on `c6a7447`
-- https://github.com/gautbl/dbt-duckdb-sandbox/actions/runs/46007184209 on `d11941e`
-- https://github.com/gautbl/dbt-duckdb-sandbox/actions/runs/46007460191 on `f487068`, two runs
-
-**A run that passes, after a plain push:** https://github.com/gautbl/dbt-duckdb-sandbox/actions/runs/45972845303 on `ef79c0e`. The second run of it also passes.
-
-**Symptom:** the step "Deploy to GitHub Pages" fails 350 ms after the artifact upload finalizes.
-
-- The log reads `Fetching artifact metadata for "github-pages" in this workflow run`.
-- Then it reads `Found 0 artifact(s)`.
-- Then it reads `No artifacts named "github-pages" were found for this workflow run`.
-- The artifact exists. The REST API lists `github-pages` at 706395 bytes and 706546 bytes, and marks neither expired.
-
-**What this rules out:**
-
-- An upload fault. The upload finalizes with a digest and an artifact id.
-- A Pages source setting. `build_type` reads `workflow`, and the environment allows `main` and `gh-pages`.
-- A token scope. The Pages action lists artifacts through the run results service, not the REST API, so `actions: read` does not gate it.
-- A stale action. The pass and the fails use the same two action versions, and both warn that Node 24 forces the runner.
-
-**Lead:** the docs runs that follow a merge commit fail. The run after a plain push passes. Start the diagnosis on that difference.
-
-**Cause found, and the lead is false.** Read the comment "Cause and fix" below. Run 46005499345 is a merge commit and it passed. The fault is a race in the GitHub artifact metadata service, not in the trigger shape. See actions/deploy-pages issue 451.
-
-## Comments
-
 ### Cause and fix
 
 The fault is a race in the GitHub artifact metadata service, not a fault in
 this repository. `actions/deploy-pages` reads the artifact list of its own run
-once. That list can stay empty for seconds after the upload finalizes. The
-deploy then reads `Found 0 artifact(s)` and stops in about 350 ms. The record
-is actions/deploy-pages issue 451, open at this writing. A public probe in
-that issue measured a hide time of 0.4 s to 6 s, and it saw the first lookup
-miss in 4 runs of 8. One report names a 60 s window.
+once. That list can stay empty for seconds after the upload ends. The deploy
+then reads `Found 0 artifact(s)` and stops in about 350 ms.
+
+The record is actions/deploy-pages issue 451, open at this writing. A public
+probe in that issue measured a hide time of 0.4 s to 6 s. The probe saw the
+first lookup miss in 4 runs of 8. One report names a 60 s window.
 
 The same issue names the second face of the fault. A re-run of the failed job
-uploads a second `github-pages` artifact into the same run, and the deploy then
+uploads a second `github-pages` artifact into the same run. The deploy then
 stops with `Multiple artifacts named "github-pages" were unexpectedly found`.
 Both faces appear in the runs of this ticket.
 
-**The merge-commit lead is false.** The read of the run API shows it:
+**The merge-commit lead is false.** The run API shows it:
 
 - Run 46005499345 is the merge of pull request 2, sha `c6a7447`. Its job
   `deploy` reports `success`, and step 9 `Deploy to GitHub Pages` reports
   `success`. The ticket listed this run as a failure.
-- Run 46007184209, sha `d11941e`, attempt 1. Step 9 fails 1 s after step 8.
-  Its artifact exists in the same run: id 15202057895, 706395 bytes, digest
+- Run 46007184209, sha `d11941e`, `run_attempt` 1. Step 9 fails 1 s after step
+  8. Its artifact exists in the same run: id 15202057895, 706395 bytes, digest
   `sha256:e1f1f2...8efc`, created at `13:27:21Z`, the same second as step 8.
-  So the run is right and the artifact is right, and the list came back empty.
-- Run 46007460191, sha `f487068`, attempt 2. The run holds two artifacts:
-  15202053382 (706546 bytes) and 15201069691 (706651 bytes). This is the
-  duplicate face of the fault.
-- Run 45972845303, sha `ef79c0e`, attempt 2, passed at `13:36:36Z`, one minute
-  after the failure at `13:35:07Z`. So a plain push fails and passes in the
-  same window, and the trigger shape does not decide the result.
+  The run is right and the artifact is right, and the list came back empty.
+- Run 46007460191, sha `f487068`, `run_attempt` 2. The run holds two
+  artifacts: 15202053382 (706546 bytes) and 15201069691 (706651 bytes). This
+  is the duplicate face of the fault.
+- Run 45972845303, sha `ef79c0e`, `run_attempt` 2, passed at `13:36:36Z`, one
+  minute after the failure at `13:35:07Z`. A plain push fails and passes in
+  one window, so the trigger shape does not decide the result.
 
 The first failures followed merges by chance. The sample was small, and the
 miss rate is about one half.
@@ -82,36 +55,36 @@ miss rate is about one half.
 
 `.github/workflows/docs.yml` answers both faces:
 
-1. **One artifact name per run attempt.** The job sets
+1. **One artifact name per `github.run_attempt` value.** The job sets
    `PAGES_ARTIFACT: github-pages-${{ github.run_attempt }}`. The upload and all
-   deploys read that name. A re-run increments the attempt, so a run never
-   holds two artifacts with one name, and the error that counts 2 cannot occur.
-2. **Three deploy attempts.** Attempt 1 and 2 carry `continue-on-error: true`,
-   and a wait of 20 s and 40 s sits between them. Attempt 3 sets the job
-   verdict. The attempts land near 0 s, 20 s and 60 s after the upload, which
-   covers the observed window.
+   deploys read that name. A re-run increments the value, so a run never holds
+   two artifacts with one name, and the error that counts 2 cannot occur.
+2. **Three tries of the deploy.** Try 1 and try 2 carry
+   `continue-on-error: true`, and a wait of 20 s and 40 s sits between them.
+   Try 3 sets the job verdict. The tries land near 0 s, 20 s and 60 s after the
+   upload, which covers the observed window.
 3. **No cancellation of a live deploy.** The concurrency group keeps
    `cancel-in-progress: false`, as the GitHub Pages starter workflow does. A
    cancelled deploy leaves the environment unfinished.
 
 The comment at the top of the workflow names the cause, the issue number and
-the false lead, so a reader sees why the deploy broke.
+the false lead. A reader then sees why the deploy broke.
 
 ### What the run API shows, and what is still open
 
-`gh` is not installed on this machine and the environment holds no GitHub
+`gh` is not installed on this machine, and the environment holds no GitHub
 token. The run and artifact facts above come from the anonymous REST API,
-which serves the public repository. The step logs do not, so this diagnosis
-rests on step timings, artifact metadata and the linked public issue.
+which serves the public repository. The step logs do not.
 
-These boxes need a human with repository write access:
+So this diagnosis rests on step timings, artifact metadata and the linked
+public issue. These boxes need a human with repository write access:
 
 - Merge three pull requests with a green build, and check the deploy step of
   each docs run. The first merge also proves the fix on this branch.
 - Open https://gautbl.github.io/dbt-duckdb-sandbox/ and confirm the site
   serves the latest docs.
 - Confirm that a red build still stops the deploy. Ticket 05 already shows the
-  red build, and the job guard is unchanged.
+  red build, and the job guard does not change.
 
-The README line about the docs gate stays correct: the fix changes no trigger
+The README line about the docs gate stays correct. The fix changes no trigger
 and no guard.
