@@ -114,3 +114,39 @@ public issue. These boxes need a human with repository write access:
 
 The README line about the docs gate stays correct. The fix changes no trigger
 and no guard.
+
+### Two-axis review, and the state of each finding
+
+The review ran on the diff `a8a60a2...HEAD`, with the Standards and the Spec
+axes apart.
+
+Standards, hard breaches, all closed:
+
+- Four-sentence paragraphs in the workflow comment and in this file. `c1600af`
+  splits them.
+- One 30-word instruction with a colon. `c1600af` splits it into two.
+- One 26-word sentence. `c1600af` splits it.
+- The Comments history was replaced, not appended. `3596ffd` restores the run
+  URLs, the symptom block, the rule-outs and the lead.
+
+Standards, judgement calls, kept as they are:
+
+- **Duplicated Code and Repeated Switches.** The deploy block repeats three
+  times, and the `if: steps.deployN.outcome == 'failure'` test appears three
+  times. YAML has no loop. A retry action would add a third-party dependency,
+  and this repo carries first-party actions only.
+
+Spec, open, and why:
+
+- The three-merge evidence needs a human, as the section above says.
+- The step log stays unread, because no token exists here. The cause rests on
+  step timings, artifact metadata and issue 451.
+- The `cancel-in-progress` change is scope creep against the ticket text. The
+  workflow says why it is there, and ticket 03 does not record the reversal.
+
+Spec, unproven until one live run:
+
+- The custom artifact name. `deploy-pages` sends the artifact id to Pages, not
+  the name, so the change should hold.
+- A late failure can stack two deployments on one environment. The artifact
+  race fails before that point, so the common case stays safe.
