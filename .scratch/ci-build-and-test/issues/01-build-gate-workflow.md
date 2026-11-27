@@ -33,7 +33,7 @@ The first run is green.
 - [x] The workflow has no repository secret and no cloud credential.
 - [x] A comment in the file states that the missing `--select` is deliberate.
 - [x] The log shows seed, model and test counts, so a real build is one click away.
-- [ ] The first run on `main` is green.
+- [X] The first run on `main` is green. https://github.com/gautbl/dbt-duckdb-sandbox/actions/runs/45972752029
 
 ## Comments
 
@@ -54,7 +54,6 @@ Commit `43a9907` adds the workflow and two repairs that a clean runner forced.
 
 **Left for later tickets:**
 
-- The final box needs the GitHub run URL. A human supplies it under ticket 05, once the first push to `main` runs the workflow. Delete this line when the URL is here.
 - `docs.yml` uses CPython 3.12 and an unpinned `dbt-duckdb`. Ticket 02 repairs both.
 - `docs.yml` does not wait for the build. Ticket 03 adds the edge.
 - A stale `target/partial_parse.msgpack` on a developer machine holds an old absolute path. It breaks the build until `target/` goes. CI never hits this, because it starts with no `target/`.
