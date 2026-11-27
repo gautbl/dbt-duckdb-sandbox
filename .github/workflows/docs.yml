@@ -9,6 +9,24 @@ name: Deploy dbt docs
 # A site built from a pull request must not reach Pages. The `push` term in
 # the job guard stops that case, because the `branches` filter alone does not.
 #
+# The deploy retries, because of a race on the GitHub side, not in this file.
+# The artifact metadata list that `deploy-pages` reads can stay empty for
+# seconds after the upload ends. The deploy then reads `Found 0 artifact(s)`
+# and stops in about 350 ms.
+#
+# See actions/deploy-pages issue 451.
+#
+# A re-run of the same job hits the other face of the same fault. The run then
+# holds two `github-pages` artifacts, and the deploy stops with an error that
+# counts 2.
+#
+# This workflow answers both faces. It sets one artifact name per
+# `github.run_attempt` value, and it tries the deploy three times.
+#
+# The fault first looked like a merge-commit fault, because the first failures
+# followed merges. Run 46005499345 is a merge commit and it passed, so the
+# merge link was a coincidence.
+#
 # There is no `workflow_dispatch` trigger here, and that absence is a decision,
 # not an oversight. See the comment under `on:`.
 
@@ -36,10 +54,15 @@ permissions:
   pages: write
   id-token: write
 
-# Allow only one concurrent deployment
+# Allow only one concurrent deployment. Do not cancel a deployment that
+# already runs.
+#
+# A cancelled deploy leaves the Pages environment unfinished. The failure then
+# shows at the next deploy, not here. GitHub states this rule in its own Pages
+# starter workflow.
 concurrency:
   group: pages
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   deploy:
@@ -57,7 +80,17 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+      url: >-
+        ${{ steps.deploy1.outputs.page_url ||
+        steps.deploy2.outputs.page_url ||
+        steps.deploy3.outputs.page_url }}
+    env:
+      # One artifact name per `github.run_attempt` value. The upload and the
+      # three deploys read the same name.
+      #
+      # A re-run of this job increments the value, so the new artifact gets a
+      # new name. The run then never holds two artifacts with one name.
+      PAGES_ARTIFACT: github-pages-${{ github.run_attempt }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -100,7 +133,41 @@ jobs:
         uses: actions/upload-pages-artifact@v3
         with:
           path: target
+          name: ${{ env.PAGES_ARTIFACT }}
 
-      - name: Deploy to GitHub Pages
-        id: deployment
+      # Try 1. A failed try is not a verdict, so it does not fail the job. A
+      # green build still gates the site: a try runs only after the build run
+      # and this job pass their own terms.
+      - name: Deploy to GitHub Pages (try 1 of 3)
+        id: deploy1
+        continue-on-error: true
         uses: actions/deploy-pages@v4
+        with:
+          artifact_name: ${{ env.PAGES_ARTIFACT }}
+
+      # The wait grows. A public probe saw a hide time of 0.4 s to 6 s, and one
+      # report names 60 s. The tries land near 0 s, 20 s and 60 s after the
+      # upload.
+      - name: Wait 20 s before try 2
+        if: steps.deploy1.outcome == 'failure'
+        run: sleep 20
+
+      - name: Deploy to GitHub Pages (try 2 of 3)
+        id: deploy2
+        if: steps.deploy1.outcome == 'failure'
+        continue-on-error: true
+        uses: actions/deploy-pages@v4
+        with:
+          artifact_name: ${{ env.PAGES_ARTIFACT }}
+
+      - name: Wait 40 s before try 3
+        if: steps.deploy2.outcome == 'failure'
+        run: sleep 40
+
+      # Try 3 is the last one, so its result is the result of the job.
+      - name: Deploy to GitHub Pages (try 3 of 3)
+        id: deploy3
+        if: steps.deploy2.outcome == 'failure'
+        uses: actions/deploy-pages@v4
+        with:
+          artifact_name: ${{ env.PAGES_ARTIFACT }}
