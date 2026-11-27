@@ -12,12 +12,16 @@ name: Deploy dbt docs
 # The deploy retries, because of a race on the GitHub side, not in this file.
 # The artifact metadata list that `deploy-pages` reads can stay empty for
 # seconds after the upload ends. The deploy then reads `Found 0 artifact(s)`
-# and stops in about 350 ms. See actions/deploy-pages issue 451.
+# and stops in about 350 ms.
+#
+# See actions/deploy-pages issue 451.
 #
 # A re-run of the same job hits the other face of the same fault. The run then
 # holds two `github-pages` artifacts, and the deploy stops with an error that
-# counts 2. This workflow answers both faces: one artifact name per
-# `github.run_attempt` value, and three tries of the deploy.
+# counts 2.
+#
+# This workflow answers both faces. It sets one artifact name per
+# `github.run_attempt` value, and it tries the deploy three times.
 #
 # The fault first looked like a merge-commit fault, because the first failures
 # followed merges. Run 46005499345 is a merge commit and it passed, so the
@@ -51,9 +55,11 @@ permissions:
   id-token: write
 
 # Allow only one concurrent deployment. Do not cancel a deployment that
-# already runs: a cancelled deploy leaves the Pages environment in an
-# unfinished state, and the failure then shows at the next deploy, not here.
-# GitHub states this rule in its own Pages starter workflow.
+# already runs.
+#
+# A cancelled deploy leaves the Pages environment unfinished. The failure then
+# shows at the next deploy, not here. GitHub states this rule in its own Pages
+# starter workflow.
 concurrency:
   group: pages
   cancel-in-progress: false
@@ -80,9 +86,10 @@ jobs:
         steps.deploy3.outputs.page_url }}
     env:
       # One artifact name per `github.run_attempt` value. The upload and the
-      # three deploys read the same name. A re-run of this job increments the
-      # value, so the new artifact gets a new name, and the run never holds two
-      # artifacts with one name.
+      # three deploys read the same name.
+      #
+      # A re-run of this job increments the value, so the new artifact gets a
+      # new name. The run then never holds two artifacts with one name.
       PAGES_ARTIFACT: github-pages-${{ github.run_attempt }}
     steps:
       - uses: actions/checkout@v4

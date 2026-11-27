@@ -47,13 +47,15 @@ this repository. `actions/deploy-pages` reads the artifact list of its own run
 once. That list can stay empty for seconds after the upload ends. The deploy
 then reads `Found 0 artifact(s)` and stops in about 350 ms.
 
-The record is actions/deploy-pages issue 451, open at this writing. A public
-probe in that issue measured a hide time of 0.4 s to 6 s. The probe saw the
-first lookup miss in 4 runs of 8. One report names a 60 s window.
+The record is actions/deploy-pages issue 451, open at this writing.
+
+A public probe in that issue measured a hide time of 0.4 s to 6 s. The probe
+saw the first lookup miss in 4 runs of 8. One report names a 60 s window.
 
 The same issue names the second face of the fault. A re-run of the failed job
 uploads a second `github-pages` artifact into the same run. The deploy then
 stops with `Multiple artifacts named "github-pages" were unexpectedly found`.
+
 Both faces appear in the runs of this ticket.
 
 **The merge-commit lead is false.** The run API shows it:
