@@ -8,9 +8,9 @@ Reproduce the fault and find its cause. Then make the deploy stable. Three merge
 
 **Status:** ready-for-agent
 
-- [ ] A pull request merges with a green build, and the docs run that follows passes its deploy step.
+- [x] A pull request merges with a green build, and the docs run that follows passes its deploy step.
 - [ ] Two later merges do the same, so the fault does not return in three runs.
-- [ ] The site at https://gautbl.github.io/dbt-duckdb-sandbox/ serves the latest docs.
+- [x] The site at https://gautbl.github.io/dbt-duckdb-sandbox/ serves the latest docs.
 - [ ] A red build still stops the deploy, as ticket 03 asks.
 - [ ] A comment in the workflow names the cause, and a reader can tell why the deploy broke.
 
@@ -150,3 +150,20 @@ Spec, unproven until one live run:
   the name, so the change should hold.
 - A late failure can stack two deployments on one environment. The artifact
   race fails before that point, so the common case stays safe.
+
+### First merge after the fix
+
+Pull request 5 merged as `25d00f2`, and the build run passed. The docs run
+that followed passed its deploy:
+
+- Run https://github.com/gautbl/dbt-duckdb-sandbox/actions/runs/46013306443,
+  `run_attempt` 1, `success`.
+- Step 9, try 1 of 3, failed. Step 10 waited 20 s, and step 11, try 2 of 3,
+  deployed at `14:10:05Z`. Steps 12 and 13 skipped.
+- The race hit the first try on this run. The retry is the step that saved it,
+  so the fix earned its place on the first live run.
+- The site answers 200 at 1.8 MB, with `Last-Modified: 27 Nov 2026 14:10:01
+  GMT`. That time is the deploy of try 2, so the site holds this build.
+
+Open still: two more merges, and one red build to show that the guard holds.
+The job guard did not change, so ticket 05 keeps its red evidence.
