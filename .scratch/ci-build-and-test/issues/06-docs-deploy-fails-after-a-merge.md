@@ -6,7 +6,7 @@ Reproduce the fault and find its cause. Then make the deploy stable. Three merge
 
 **Blocked by:** None (can start immediately). Ticket 03 added the green-build edge, and this ticket repairs the deploy leg of that edge.
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 - [x] A pull request merges with a green build, and the docs run that follows passes its deploy step.
 - [x] Two later merges do the same, so the fault does not return in three runs.
@@ -39,6 +39,11 @@ Reproduce the fault and find its cause. Then make the deploy stable. Three merge
 - A stale action. The pass and the fails use the same two action versions, and both warn that Node 24 forces the runner.
 
 **Lead:** the docs runs that follow a merge commit fail. The run after a plain push passes. Start the diagnosis on that difference.
+
+**Cause found, and the lead is false.** Read the section "Cause and fix" under
+Comments. Run 46005499345 is a merge commit and it passed. The fault is a race
+in the GitHub artifact metadata service, not in the trigger shape. See
+actions/deploy-pages issue 451.
 
 ### Cause and fix
 
