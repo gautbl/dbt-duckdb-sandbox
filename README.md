@@ -84,7 +84,7 @@ The second command repeats work on purpose, so the workflow matches the commands
 
 CI does **not** run `dbt source freshness`. The source declarations name a `loaded_at` column that the seed files do not carry, so a freshness check would fail. Freshness stays a local step.
 
-**Docs publish.** `.github/workflows/docs.yml` follows a green build. It triggers on the completed run of the build workflow, filtered to `main`. A red or cancelled build never reaches the site. The job checks out the commit that the green build tested, so the site shows that commit. There is no dispatch trigger on the docs workflow. To redeploy the site, dispatch the build workflow: a green run starts the docs publish in turn.
+**Docs publish.** `.github/workflows/docs.yml` follows a green build. It triggers on a completed run of the build workflow, and two guards decide the deploy. The run must be green, and its trigger must be a push to `main`. A pull request build never reaches the site, because its base branch can name `main`. The job checks out the commit that the green build tested, so the site shows that commit. There is no dispatch trigger on the docs workflow. To redeploy the site, dispatch the build workflow: a green run starts the docs publish in turn.
 
 The workflow files are the source of truth for these commands. When a workflow changes, change the matching line here in the same commit.
 
@@ -122,8 +122,7 @@ links.
 description, columns, tests, and SQL.
 
 5. The **Source freshness** tab shows freshness checks on `raw.orders` and `raw.customers`. Run `dbt
-source freshness` to update this data. This step is local only: CI runs no freshness check, and the
-docs job runs `dbt docs generate` on a clean tree, so the published site carries no freshness result.
+source freshness` to update this data.
 
 6. Share the site as a static artifact: run `dbt docs generate --target-path docs-site`, then publish
 the `docs-site/` folder to GitHub Pages, Netlify, or any static host. The site is pure HTML + JSON
