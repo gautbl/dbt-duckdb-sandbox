@@ -42,10 +42,18 @@ https://github.com/gautbl/dbt-duckdb-sandbox/actions/runs/45972752029
 - This run is the first green run of `build.yml` on `main`. The same URL sits in ticket 01.
 
 **Green pull request, the positive control.**
-https://github.com/gautbl/dbt-duckdb-sandbox/pull/2
+https://github.com/gautbl/dbt-duckdb-sandbox/pull/3
 
+- Run https://github.com/gautbl/dbt-duckdb-sandbox/actions/runs/46006963360 gives check `build` success on sha `d1f62a5`. Merge state `clean`.
 - A pull request with a green `build` check merges. The rule opens for good work.
 - So the rule holds red work and passes green work, and the ticket edits reached `main` through the gate.
+- Pull request 2 did the same earlier, with run https://github.com/gautbl/dbt-duckdb-sandbox/actions/runs/45987606723.
+
+**Runs on `main` with the rule live.**
+
+- Run https://github.com/gautbl/dbt-duckdb-sandbox/actions/runs/46005417111 is green on sha `c6a7447`, the merge of pull request 2.
+- Run https://github.com/gautbl/dbt-duckdb-sandbox/actions/runs/46007112993 is green on sha `d11941e`, the merge of pull request 3.
+- Both runs show that a merge through the gate leaves `main` green.
 
 **Rule on `main`.**
 
