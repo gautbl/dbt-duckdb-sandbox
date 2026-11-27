@@ -14,7 +14,7 @@ If the workflow changes later, the README line changes in the same commit. State
 
 **From the review of tickets 01 and 02.** The README gap is a medium finding on both axes. The README pattern table lists the patterns this project shows. Continuous integration is now one of them. Two more points sit here:
 
-- `docs/overview.md:19` calls the sources the ingestion seam and says they load outside dbt. `_stg__sources.yml:5` now says `dbt seed` loads them. Align the two docs in this ticket.
+- `docs/overview.md` does not state how the sources load, and `_stg__sources.yml` names `dbt seed`. Align the two docs in this ticket.
 - The README walkthrough names the `Source freshness` step, and CI does not run that check. State where CI stops, so a reader does not expect freshness in CI.
 
 - [x] The README states what continuous integration runs, with the same commands as the workflows.
