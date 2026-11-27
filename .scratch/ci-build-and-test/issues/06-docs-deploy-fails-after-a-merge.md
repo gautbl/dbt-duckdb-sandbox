@@ -206,10 +206,11 @@ The fault does not return in three runs:
 |---|---|---|---|
 | 1 | `25d00f2`, pull request 5 | 46013306443 | try 1 hit the race, try 2 deployed |
 | 2 | `284c349`, pull request 7 | 46014566211 | try 1 deployed at once |
-| 3 | this merge | the run of this merge | ticked below when the run ends |
+| 3 | `ae55639`, pull request 8 | 46014978847 | try 1 deployed at once |
 
-Run 46014566211 skipped try 2 and try 3. That shows the other side: when the
-artifact is visible at once, the extra steps cost nothing.
+Run 46014566211 and run 46014978847 skipped try 2 and try 3. That shows the
+other side: when the artifact is visible at once, the extra steps cost
+nothing.
 
 The site at https://gautbl.github.io/dbt-duckdb-sandbox/ answers 200, and its
 `Last-Modified` header follows the latest deploy.
