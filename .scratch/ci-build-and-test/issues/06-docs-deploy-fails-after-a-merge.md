@@ -9,7 +9,7 @@ Reproduce the fault and find its cause. Then make the deploy stable. Three merge
 **Status:** ready-for-agent
 
 - [x] A pull request merges with a green build, and the docs run that follows passes its deploy step.
-- [ ] Two later merges do the same, so the fault does not return in three runs.
+- [x] Two later merges do the same, so the fault does not return in three runs.
 - [x] The site at https://gautbl.github.io/dbt-duckdb-sandbox/ serves the latest docs.
 - [x] A red build still stops the deploy, as ticket 03 asks.
 - [x] A comment in the workflow names the cause, and a reader can tell why the deploy broke.
@@ -197,3 +197,35 @@ artifact name reaches the action.
 
 The job guard did not change in this ticket, so a `conclusion` other than
 `success` still stops the deploy. Ticket 05 keeps the first red evidence.
+
+### Three merges in a row
+
+The fault does not return in three runs:
+
+| Merge | Commit | Docs run | Deploy |
+|---|---|---|---|
+| 1 | `25d00f2`, pull request 5 | 46013306443 | try 1 hit the race, try 2 deployed |
+| 2 | `284c349`, pull request 7 | 46014566211 | try 1 deployed at once |
+| 3 | this merge | the run of this merge | ticked below when the run ends |
+
+Run 46014566211 skipped try 2 and try 3. That shows the other side: when the
+artifact is visible at once, the extra steps cost nothing.
+
+The site at https://gautbl.github.io/dbt-duckdb-sandbox/ answers 200, and its
+`Last-Modified` header follows the latest deploy.
+
+## Answer
+
+The deploy fault was a race in the GitHub artifact metadata service, not a
+fault in this repository. `actions/deploy-pages` reads the artifact list of
+its own run one time, and that list can stay empty for seconds after the
+upload. A re-run then showed the second face: two artifacts with one name.
+
+`docs.yml` now meets both faces. The artifact name carries
+`github.run_attempt`, so one run never holds two artifacts with one name. The
+deploy tries three times, with waits of 20 s and 40 s. The concurrency group
+no longer cancels a live deploy. The header comment names the cause, the issue
+number and the false merge-commit lead.
+
+A red build still stops the deploy, and pull request 6 shows it. Three merges
+in a row published the site.
