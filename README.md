@@ -80,7 +80,7 @@ dbt test --profiles-dir .
 
 `dbt build` selects every seed, model and test in dependency order, with no `--select`. A new model joins CI with no edit to the workflow.
 
-The second command repeats work on purpose, so the workflow matches the commands a developer runs. When a run fails, dbt logs the model and the column. The workflow uploads `target/` on a failure or a cancel, so `run_results.json` and `compiled/` stay readable. A green run uploads nothing.
+The second command repeats work on purpose, so the workflow runs both commands that a developer runs. Only the `--profiles-dir .` flag differs, and a runner needs it. When a run fails, dbt logs the model and the column. The workflow uploads `target/` on a failure or a cancel, so `run_results.json` and `compiled/` stay readable. A green run uploads nothing.
 
 CI does **not** run `dbt source freshness`. The source declarations name a `loaded_at` column that the seed files do not carry, so a freshness check would fail. Freshness stays a local step.
 
@@ -90,13 +90,21 @@ The workflow files are the source of truth for these commands. When a workflow c
 
 ## The full check
 
-One command runs the whole check, exactly as CI does:
+One command runs the whole check. After `setup.ps1` or `setup.sh`, a developer
+runs it from the project root with no extra flag:
 
 ```
-dbt build --profiles-dir .
+dbt build
 ```
 
-The CI run adds `dbt test --profiles-dir .` as its second step.
+`dbt build` runs every seed, model and test in dependency order, so a green
+build is the same verdict that CI reports. CI then repeats the tests as a
+second command. That second command takes `--profiles-dir .`, because a runner
+has no `~/.dbt` profile:
+
+```
+dbt test --profiles-dir .
+```
 
 ## Generate the documentation site
 
