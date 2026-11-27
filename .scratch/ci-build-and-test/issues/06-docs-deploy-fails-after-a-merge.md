@@ -11,8 +11,8 @@ Reproduce the fault and find its cause. Then make the deploy stable. Three merge
 - [x] A pull request merges with a green build, and the docs run that follows passes its deploy step.
 - [ ] Two later merges do the same, so the fault does not return in three runs.
 - [x] The site at https://gautbl.github.io/dbt-duckdb-sandbox/ serves the latest docs.
-- [ ] A red build still stops the deploy, as ticket 03 asks.
-- [ ] A comment in the workflow names the cause, and a reader can tell why the deploy broke.
+- [x] A red build still stops the deploy, as ticket 03 asks.
+- [x] A comment in the workflow names the cause, and a reader can tell why the deploy broke.
 
 ## Comments
 
@@ -167,3 +167,33 @@ that followed passed its deploy:
 
 Open still: two more merges, and one red build to show that the guard holds.
 The job guard did not change, so ticket 05 keeps its red evidence.
+
+### The deploy log of the first merge, and the red proof
+
+The log of run 46013306443 shows the race and the save in one page:
+
+- Try 1, `14:09:38Z`: `Found 0 artifact(s)`, then `Error: No artifacts named
+  "github-pages-1" were found for this workflow run`.
+- Try 2, `14:09:59Z`: `Found 1 artifact(s)`, then the deploy goes through.
+
+So the race hit the first try of the first live run. The retry is the step
+that published the site. The name `github-pages-1` also proves the custom
+artifact name reaches the action.
+
+**A red build still stops the deploy.** Scratch branch
+`scratch/gate-red-proof-2` carried the test
+`tests/assert_red_proof_returns_rows.sql`. The test returns rows on purpose.
+
+- Pull request 6, run
+  https://github.com/gautbl/dbt-duckdb-sandbox/actions/runs/46014137881,
+  event `pull_request`, sha `650fee3`, conclusion `failure`.
+- The log gives `FAIL 10 assert_red_proof_returns_rows`, then `Got 10
+  results, configured to fail if != 0`, then `PASS=35 WARN=0 ERROR=1 SKIP=3
+  TOTAL=39`. Step 6 `Build the warehouse` failed, and step 7 skipped.
+- No docs workflow run exists for sha `650fee3`. The build run was red, so
+  the edge never fires, and the site keeps its last build.
+- Pull request 6 is closed, and the branch is gone from the remote and from
+  this clone.
+
+The job guard did not change in this ticket, so a `conclusion` other than
+`success` still stops the deploy. Ticket 05 keeps the first red evidence.
